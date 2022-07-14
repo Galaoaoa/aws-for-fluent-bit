@@ -23,7 +23,7 @@ const (
 	s3FileFolderPath       = "/init/fluent-bit-init-s3-files/"
 	mainConfigFile         = "/init/fluent-bit-init.conf"
 	originalMainConfigFile = "/fluent-bit/etc/fluent-bit.conf"
-	invokerFile            = "/init/fluent-bit-invoker.sh"
+	invokeFile             = "/init/invoke_fluent_bit.sh"
 )
 
 var (
@@ -106,24 +106,24 @@ func getECSTaskMetadata(httpClient HTTPClient) ECSTaskMetadata {
 	return metadata
 }
 
-// set ECS Task Metadata as environment variables in the fluent-bit-invoker.sh
+// set ECS Task Metadata as environment variables in the invoke_fluent_bit.sh
 func setECSTaskMetadata(metadata ECSTaskMetadata, filePath string) {
 
 	t := reflect.TypeOf(metadata)
 	v := reflect.ValueOf(metadata)
 
-	invokerFile := openFile(filePath)
-	defer invokerFile.Close()
+	invokeFile := openFile(filePath)
+	defer invokeFile.Close()
 
 	for i := 0; i < t.NumField(); i++ {
 		if v.Field(i).Interface().(string) == "" {
 			continue
 		}
 		writeContent := "export " + t.Field(i).Name + "=" + v.Field(i).Interface().(string) + "\n"
-		_, err := invokerFile.WriteString(writeContent)
+		_, err := invokeFile.WriteString(writeContent)
 		if err != nil {
 			logrus.Errorln(err)
-			logrus.Fatalf("[FluentBit Init Process] Cannot write %s in the fluent-bit-invoker.sh\n", writeContent[:len(writeContent)-2])
+			logrus.Fatalf("[FluentBit Init Process] Cannot write %s in the invoke_fluent_bit.sh\n", writeContent[:len(writeContent)-2])
 		}
 	}
 }
@@ -135,7 +135,7 @@ func createCommand(command *string, filePath string) {
 
 // create a folder to store S3 config files user specified (download them from S3)
 func createS3ConfigFileFolder(folderPath string) {
-	os.Mkdir(folderPath, 0777)
+	os.Mkdir(folderPath, 0700)
 }
 
 // get our built in config files or files from s3
@@ -158,11 +158,12 @@ func getAllConfigFiles() {
 		envKey = string(env_kv[0])
 		envValue = string(env_kv[1])
 
-		matched_s3, _ := regexp.MatchString("aws_fluent_bit_s3_", envKey)
-		matched_file, _ := regexp.MatchString("aws_fluent_bit_file_", envKey)
+		matched_s3, _ := regexp.MatchString("aws_fluent_bit_init_s3", envKey)
+		matched_S3, _ := regexp.MatchString("aws_fluent_bit_init_S3", envKey)
+		matched_file, _ := regexp.MatchString("aws_fluent_bit_init_file", envKey)
 
 		// if this env var's value is an arn
-		if matched_s3 {
+		if matched_s3 || matched_S3 {
 			getS3ConfigFile(envValue)
 		}
 		// if this env var's value is a path of our built-in config file, process is derectly
@@ -315,18 +316,18 @@ func updateCommand(parserFilePath string) {
 	logrus.Infoln("[FluentBit Init Process] Command is change to -> " + fluentBitCommand)
 }
 
-// change the fluent-bit-invoker.sh
+// change the invoke_fluent_bit.sh
 // which will declare ECS Task Metadata as environment variables
 // and finally invoke Fluent Bit
-func modifyInvokerFile(filePath string) {
+func modifyInvokeFile(filePath string) {
 
-	invokerFile := openFile(filePath)
-	defer invokerFile.Close()
+	invokeFile := openFile(filePath)
+	defer invokeFile.Close()
 
-	_, err := invokerFile.WriteString(fluentBitCommand)
+	_, err := invokeFile.WriteString(fluentBitCommand)
 	if err != nil {
 		logrus.Errorln(err)
-		logrus.Fatalf("[FluentBit Init Process] Cannot write %s in fluent-bit-invoker.sh\n", fluentBitCommand)
+		logrus.Fatalf("[FluentBit Init Process] Cannot write %s in invoke_fluent_bit.sh\n", fluentBitCommand)
 	}
 }
 
@@ -348,7 +349,7 @@ func createFile(filePath string, AutoClose bool) *os.File {
 
 func openFile(filePath string) *os.File {
 
-	file, err := os.OpenFile(filePath, os.O_APPEND|os.O_WRONLY, 0777)
+	file, err := os.OpenFile(filePath, os.O_APPEND|os.O_WRONLY, 0700)
 	if err != nil {
 		logrus.Errorln(err)
 		logrus.Fatalf("[FluentBit Init Process] Unable to read %s\n", filePath)
@@ -358,18 +359,18 @@ func openFile(filePath string) *os.File {
 
 func main() {
 
-	// create the fluent-bit-invoker.sh
+	// create the invoke_fluent_bit.sh
 	// which will declare ECS Task Metadata as environment variables
 	// and finally invoke Fluent Bit
-	createFile(invokerFile, true)
+	createFile(invokeFile, true)
 
 	// get ECS Task Metadata and set the region for S3 client
 	httpClient := createHTTPClient()
 	metadata := getECSTaskMetadata(httpClient)
 	metadataReigon = reflect.ValueOf(metadata).Field(0).Interface().(string)
 
-	// set ECS Task Metada as env vars in the fluent-bit-invoker.sh
-	setECSTaskMetadata(metadata, invokerFile)
+	// set ECS Task Metada as env vars in the invoke_fluent_bit.sh
+	setECSTaskMetadata(metadata, invokeFile)
 
 	// create main config file which will be used invoke Fluent Bit
 	createFile(mainConfigFile, true)
@@ -392,9 +393,9 @@ func main() {
 	// add @INCLUDE in main config file and change the fluent bit command if it's a Parser config file
 	processS3ConfigFiles(s3FileFolderPath)
 
-	// modify fluent-bit-invoker.sh, invoke fluent bit
+	// modify invoke_fluent_bit.sh, invoke fluent bit
 	// this function will be called at the end
 	// any error appear above will cause exit this process,
-	// will not write Fluent Bit command in the invoker.sh so Fluent Bit will not be invoked
-	modifyInvokerFile(invokerFile)
+	// will not write Fluent Bit command in the finvoke_fluent_bit.sh so Fluent Bit will not be invoked
+	modifyInvokeFile(invokeFile)
 }

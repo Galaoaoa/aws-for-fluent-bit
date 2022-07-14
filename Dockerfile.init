@@ -1,4 +1,4 @@
-FROM public.ecr.aws/amazonlinux/amazonlinux:latest as fluent-bit-initer
+FROM public.ecr.aws/amazonlinux/amazonlinux:latest as init-builder
 
 RUN curl -sL -o /bin/gimme https://raw.githubusercontent.com/travis-ci/gimme/master/gimme
 RUN chmod +x /bin/gimme
@@ -16,12 +16,11 @@ RUN go mod init fluent_bit_init_process \
     && go mod tidy \
     && go build fluent_bit_init_process.go
 
-
 FROM amazon/aws-for-fluent-bit:latest
 
 RUN mkdir -p /init
 
-COPY --from=fluent-bit-initer /fluent_bit_init_process /init/fluent_bit_init_process
+COPY --from=init-builder /fluent_bit_init_process /init/fluent_bit_init_process
 
 COPY init/fluent_bit_init_entrypoint.sh /init/fluent_bit_init_entrypoint.sh
 RUN chmod +x /init/fluent_bit_init_entrypoint.sh

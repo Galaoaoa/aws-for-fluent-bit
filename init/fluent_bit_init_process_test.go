@@ -226,15 +226,15 @@ func TestDownloadS3ConfigFile(t *testing.T) {
 
 }
 
-func TestModifyInvokerFile(t *testing.T) {
-	filePath := "testModifyInvoker.sh"
+func TestModifyInvokeFile(t *testing.T) {
+	filePath := "testModifyInvoke.sh"
 	file := createFileHelper(filePath)
 
 	defer os.Remove(filePath)
 	defer file.Close()
 
 	expectedContent := fluentBitCommand
-	modifyInvokerFile(filePath)
+	modifyInvokeFile(filePath)
 	actualContent := readFileHelper(filePath)
 
 	assert.Equal(t, actualContent, expectedContent)
