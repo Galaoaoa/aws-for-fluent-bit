@@ -48,7 +48,8 @@ eu-north-1
 ap-northeast-3
 "
 
-classic_regions_account_id="906394416424"
+# classic_regions_account_id="906394416424"
+classic_regions_account_id="546265451413"
 
 cn_regions="
 cn-north-1
@@ -79,8 +80,8 @@ cape_town_account_id="928143927712"
 milan_region="eu-south-1"
 
 # ======================================================================
-# milan_account_id="960320637246"
-milan_account_id="546265451413"
+milan_account_id="960320637246"
+# milan_account_id="546265451413"
 
 gamma_region="us-west-2"
 
