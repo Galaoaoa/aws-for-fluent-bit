@@ -140,8 +140,17 @@ publish_to_docker_hub() {
 			fi
 		done
 
-		create_manifest_list ${1} "latest" ${AWS_FOR_FLUENT_BIT_VERSION}
-		create_manifest_list ${1} ${AWS_FOR_FLUENT_BIT_VERSION} ${AWS_FOR_FLUENT_BIT_VERSION}
+		# ======================================================================
+		# create_manifest_list ${1} "latest" ${AWS_FOR_FLUENT_BIT_VERSION}
+		# create_manifest_list ${1} ${AWS_FOR_FLUENT_BIT_VERSION} ${AWS_FOR_FLUENT_BIT_VERSION}
+
+		if [ "${1}" = "amazon/aws-for-fluent-bit" ]; then
+				create_manifest_list galaoaoa/aws-for-fluent-bit "latest" ${AWS_FOR_FLUENT_BIT_VERSION}
+				create_manifest_list galaoaoa/aws-for-fluent-bit ${AWS_FOR_FLUENT_BIT_VERSION} ${AWS_FOR_FLUENT_BIT_VERSION}
+		elif [ "${1}" = "amazon/aws-for-fluent-bit-init" ]; then
+				create_manifest_list galaoaoa/aws-for-fluent-bit-init "latest" ${AWS_FOR_FLUENT_BIT_VERSION}
+				create_manifest_list galaoaoa/aws-for-fluent-bit-init ${AWS_FOR_FLUENT_BIT_VERSION} ${AWS_FOR_FLUENT_BIT_VERSION}
+		fi
 	fi
 }
 
