@@ -128,8 +128,16 @@ publish_to_docker_hub() {
 	else
 		for arch in "${ARCHITECTURES[@]}"
 		do
-			docker tag ${1}:"$arch" ${1}:"${arch}"-${AWS_FOR_FLUENT_BIT_VERSION}
-			docker push ${1}:"$arch"-${AWS_FOR_FLUENT_BIT_VERSION}
+			# ======================================================================
+			# docker tag ${1}:"$arch" ${1}:"${arch}"-${AWS_FOR_FLUENT_BIT_VERSION}
+			# docker push ${1}:"$arch"-${AWS_FOR_FLUENT_BIT_VERSION}
+			if [ "${1}" = "amazon/aws-for-fluent-bit" ]; then
+				docker tag ${1}:"$arch" galaoaoa/aws-for-fluent-bit:"${arch}"-${AWS_FOR_FLUENT_BIT_VERSION}
+				docker push galaoaoa/aws-for-fluent-bit:"$arch"-${AWS_FOR_FLUENT_BIT_VERSION}
+			elif [ "${1}" = "amazon/aws-for-fluent-bit-init" ]; then
+				docker tag ${1}:"$arch" galaoaoa/aws-for-fluent-bit-init:"${arch}"-${AWS_FOR_FLUENT_BIT_VERSION}
+				docker push galaoaoa/aws-for-fluent-bit-init:"$arch"-${AWS_FOR_FLUENT_BIT_VERSION}
+			fi
 		done
 
 		create_manifest_list ${1} "latest" ${AWS_FOR_FLUENT_BIT_VERSION}
