@@ -504,16 +504,16 @@ verify_dockerhub() {
 
 		# verify_sha $sha1 $sha2
 
-		docker pull amazon/aws-for-fluent-bit:latest
+		docker pull galaoaoa/aws-for-fluent-bit:latest
 		sha1=$(docker inspect --format='{{index .RepoDigests 0}}' galaoaoa/aws-for-fluent-bit:latest)
-		docker pull amazon/aws-for-fluent-bit:${AWS_FOR_FLUENT_BIT_VERSION}
+		docker pull galaoaoa/aws-for-fluent-bit:${AWS_FOR_FLUENT_BIT_VERSION}
 		sha2=$(docker inspect --format='{{index .RepoDigests 0}}' galaoaoa/aws-for-fluent-bit:${AWS_FOR_FLUENT_BIT_VERSION})
 
 		verify_sha $sha1 $sha2
 		
-		docker pull amazon/aws-for-fluent-bit-init:latest
+		docker pull galaoaoa/aws-for-fluent-bit-init:latest
 		sha1_init=$(docker inspect --format='{{index .RepoDigests 0}}' galaoaoa/aws-for-fluent-bit-init:latest)
-		docker pull amazon/aws-for-fluent-bit-init:${AWS_FOR_FLUENT_BIT_VERSION}
+		docker pull galaoaoa/aws-for-fluent-bit-init:${AWS_FOR_FLUENT_BIT_VERSION}
 		sha2_init=$(docker inspect --format='{{index .RepoDigests 0}}' galaoaoa/aws-for-fluent-bit-init:${AWS_FOR_FLUENT_BIT_VERSION})
 
 		verify_sha $sha1_init $sha2_init
