@@ -388,6 +388,8 @@ publish_ecr() {
 
 	aws ecr get-login-password --region ${region}| docker login --username AWS --password-stdin ${account_id}.dkr.ecr.${region}.amazonaws.com
 	aws ecr create-repository --repository-name aws-for-fluent-bit --image-scanning-configuration scanOnPush=true --region ${region}  || true
+	# ======================================================================
+	aws ecr create-repository --repository-name aws-for-fluent-bit-init --image-scanning-configuration scanOnPush=true --region ${region}  || true
 
 	for arch in "${ARCHITECTURES[@]}"
 	do
