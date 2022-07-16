@@ -129,7 +129,7 @@ publish_to_docker_hub() {
 		for arch in "${ARCHITECTURES[@]}"
 		do
 			# ======================================================================
-			# =========================Registry name should be fixed later=========================
+			# =========================Registry name should be fixed later
 			# docker tag ${1}:"$arch" ${1}:"${arch}"-${AWS_FOR_FLUENT_BIT_VERSION}
 			# docker push ${1}:"$arch"-${AWS_FOR_FLUENT_BIT_VERSION}
 			if [ "${1}" = "amazon/aws-for-fluent-bit" ]; then
