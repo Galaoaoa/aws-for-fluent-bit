@@ -551,7 +551,7 @@ verify_public_ecr() {
 
 		# ======================================================================
 		docker pull public.ecr.aws/f3y9q9u2/aws-for-fluent-bit:latest
-		sha1=$(docker inspect --format='{{index .RepoDigests 0}}' public.ecr.aws/af3y9q9u2/aws-for-fluent-bit:latest)
+		sha1=$(docker inspect --format='{{index .RepoDigests 0}}' public.ecr.aws/f3y9q9u2/aws-for-fluent-bit:latest)
 		docker pull public.ecr.aws/f3y9q9u2/aws-for-fluent-bit:${AWS_FOR_FLUENT_BIT_VERSION}
 		sha2=$(docker inspect --format='{{index .RepoDigests 0}}' public.ecr.aws/f3y9q9u2/aws-for-fluent-bit:${AWS_FOR_FLUENT_BIT_VERSION})
 
