@@ -247,7 +247,20 @@ rollback_ssm() {
 }
 
 check_parameter() {
-	repo_uri=$(aws ssm get-parameter --name /aws/service/aws-for-fluent-bit/${2} --region ${1} --query 'Parameter.Value')
+	# ======================================================================
+	# repo_uri=$(aws ssm get-parameter --name /aws/service/aws-for-fluent-bit/${2} --region ${1} --query 'Parameter.Value')
+	# IFS='.' read -r -a array <<<"$repo_uri"
+	# region="${array[3]}"
+	# if [ "${1}" != "${region}" ]; then
+	# 	echo "${1}: Region found in repo URI does not match SSM Parameter region: ${repo_uri}"
+	# 	exit 1
+	# fi
+	# # remove leading and trailing quotes from repo_uri
+	# repo_uri=$(sed -e 's/^"//' -e 's/"$//' <<<"$repo_uri")
+	# docker pull $repo_uri
+
+	# ===================================================aws -> ygloa ================================================
+	repo_uri=$(aws ssm get-parameter --name /ygloa/service/aws-for-fluent-bit/${2} --region ${1} --query 'Parameter.Value')
 	IFS='.' read -r -a array <<<"$repo_uri"
 	region="${array[3]}"
 	if [ "${1}" != "${region}" ]; then
@@ -258,8 +271,7 @@ check_parameter() {
 	repo_uri=$(sed -e 's/^"//' -e 's/"$//' <<<"$repo_uri")
 	docker pull $repo_uri
 
-	# ======================================================================
-	repo_uri=$(aws ssm get-parameter --name /aws/service/aws-for-fluent-bit-init/${2} --region ${1} --query 'Parameter.Value')
+	repo_uri=$(aws ssm get-parameter --name /ygloa/service/aws-for-fluent-bit-init/${2} --region ${1} --query 'Parameter.Value')
 	IFS='.' read -r -a array <<<"$repo_uri"
 	region="${array[3]}"
 	if [ "${1}" != "${region}" ]; then
