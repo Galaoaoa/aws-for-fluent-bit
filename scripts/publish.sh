@@ -182,27 +182,29 @@ publish_to_public_ecr() {
 		# create_manifest_list public.ecr.aws/aws-observability/aws-for-fluent-bit ${AWS_FOR_FLUENT_BIT_VERSION} ${AWS_FOR_FLUENT_BIT_VERSION}
 		# aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/aws-observability
 		# create_manifest_list public.ecr.aws/aws-observability/aws-for-fluent-bit "latest" ${AWS_FOR_FLUENT_BIT_VERSION}
+		
+		aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/f3y9q9u2
 
 		if [ ${1} = "amazon/aws-for-fluent-bit" ]; then
 			for arch in "${ARCHITECTURES[@]}"
 			do
-				docker tag ${1}:"$arch" public.ecr.aws/ygloa_ecr/aws-for-fluent-bit:"$arch"-${AWS_FOR_FLUENT_BIT_VERSION}
-				docker push public.ecr.aws/ygloa_ecr/aws-for-fluent-bit:"$arch"-${AWS_FOR_FLUENT_BIT_VERSION}
+				docker tag ${1}:"$arch" public.ecr.aws/f3y9q9u2/aws-for-fluent-bit:"$arch"-${AWS_FOR_FLUENT_BIT_VERSION}
+				docker push public.ecr.aws/f3y9q9u2/aws-for-fluent-bit:"$arch"-${AWS_FOR_FLUENT_BIT_VERSION}
 			done
 
-			create_manifest_list public.ecr.aws/ygloa_ecr/aws-for-fluent-bit ${AWS_FOR_FLUENT_BIT_VERSION} ${AWS_FOR_FLUENT_BIT_VERSION}
-			aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/ygloa_ecr
-			create_manifest_list public.ecr.aws/ygloa_ecr/aws-for-fluent-bit "latest" ${AWS_FOR_FLUENT_BIT_VERSION}
+			create_manifest_list public.ecr.aws/f3y9q9u2/aws-for-fluent-bit ${AWS_FOR_FLUENT_BIT_VERSION} ${AWS_FOR_FLUENT_BIT_VERSION}
+			aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/f3y9q9u2
+			create_manifest_list public.ecr.aws/f3y9q9u2/aws-for-fluent-bit "latest" ${AWS_FOR_FLUENT_BIT_VERSION}
 		elif [ ${1} = "amazon/aws-for-fluent-bit-init" ]; then
 			for arch in "${ARCHITECTURES[@]}"
 			do
-				docker tag ${1}:"$arch" public.ecr.aws/ygloa_ecr/aws-for-fluent-bit-init:"$arch"-${AWS_FOR_FLUENT_BIT_VERSION}
-				docker push public.ecr.aws/ygloa_ecr/aws-for-fluent-bit-init:"$arch"-${AWS_FOR_FLUENT_BIT_VERSION}
+				docker tag ${1}:"$arch" public.ecr.aws/f3y9q9u2/aws-for-fluent-bit-init:"$arch"-${AWS_FOR_FLUENT_BIT_VERSION}
+				docker push public.ecr.aws/f3y9q9u2/aws-for-fluent-bit-init:"$arch"-${AWS_FOR_FLUENT_BIT_VERSION}
 			done
 
-			create_manifest_list public.ecr.aws/ygloa_ecr/aws-for-fluent-bit-init ${AWS_FOR_FLUENT_BIT_VERSION} ${AWS_FOR_FLUENT_BIT_VERSION}
-			aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/ygloa_ecr
-			create_manifest_list public.ecr.aws/ygloa_ecr/aws-for-fluent-bit-init "latest" ${AWS_FOR_FLUENT_BIT_VERSION}
+			create_manifest_list public.ecr.aws/f3y9q9u2/aws-for-fluent-bit-init ${AWS_FOR_FLUENT_BIT_VERSION} ${AWS_FOR_FLUENT_BIT_VERSION}
+			aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/f3y9q9u2
+			create_manifest_list public.ecr.aws/f3y9q9u2/aws-for-fluent-bit-init "latest" ${AWS_FOR_FLUENT_BIT_VERSION}
 		fi
 	fi
 }
@@ -546,17 +548,17 @@ verify_public_ecr() {
 		# verify_sha $sha1 $sha2
 
 		# ======================================================================
-		docker pull public.ecr.aws/ygloa_ecr/aws-for-fluent-bit:latest
-		sha1=$(docker inspect --format='{{index .RepoDigests 0}}' public.ecr.aws/aygloa_ecr/aws-for-fluent-bit:latest)
-		docker pull public.ecr.aws/ygloa_ecr/aws-for-fluent-bit:${AWS_FOR_FLUENT_BIT_VERSION}
-		sha2=$(docker inspect --format='{{index .RepoDigests 0}}' public.ecr.aws/ygloa_ecr/aws-for-fluent-bit:${AWS_FOR_FLUENT_BIT_VERSION})
+		docker pull public.ecr.aws/f3y9q9u2/aws-for-fluent-bit:latest
+		sha1=$(docker inspect --format='{{index .RepoDigests 0}}' public.ecr.aws/af3y9q9u2/aws-for-fluent-bit:latest)
+		docker pull public.ecr.aws/f3y9q9u2/aws-for-fluent-bit:${AWS_FOR_FLUENT_BIT_VERSION}
+		sha2=$(docker inspect --format='{{index .RepoDigests 0}}' public.ecr.aws/f3y9q9u2/aws-for-fluent-bit:${AWS_FOR_FLUENT_BIT_VERSION})
 
 		verify_sha $sha1 $sha2
 		
-		docker pull public.ecr.aws/ygloa_ecr/aws-for-fluent-bit-init:latest
-		sha1_init=$(docker inspect --format='{{index .RepoDigests 0}}' public.ecr.aws/ygloa_ecr/aws-for-fluent-bit-init:latest)
-		docker pull public.ecr.aws/ygloa_ecr/aws-for-fluent-bit-init:${AWS_FOR_FLUENT_BIT_VERSION}
-		sha2_init=$(docker inspect --format='{{index .RepoDigests 0}}' public.ecr.aws/ygloa_ecr/aws-for-fluent-bit-init:${AWS_FOR_FLUENT_BIT_VERSION})
+		docker pull public.ecr.aws/f3y9q9u2/aws-for-fluent-bit-init:latest
+		sha1_init=$(docker inspect --format='{{index .RepoDigests 0}}' public.ecr.aws/f3y9q9u2/aws-for-fluent-bit-init:latest)
+		docker pull public.ecr.aws/f3y9q9u2/aws-for-fluent-bit-init:${AWS_FOR_FLUENT_BIT_VERSION}
+		sha2_init=$(docker inspect --format='{{index .RepoDigests 0}}' public.ecr.aws/f3y9q9u2/aws-for-fluent-bit-init:${AWS_FOR_FLUENT_BIT_VERSION})
 
 		verify_sha $sha1_init $sha2_init
 	fi
