@@ -219,17 +219,18 @@ publish_ssm() {
 	# 	--type String --region ${1} --value ${2}:latest
 
 	if [ $# -eq 3 ]; then
-		aws ssm put-parameter --name /aws/service/aws-for-fluent-bit/${3} --overwrite \
+	# ========================================= aws  -> ygloa =============================
+		aws ssm put-parameter --name /ygloa/service/aws-for-fluent-bit/${3} --overwrite \
 			--description 'Regional Amazon ECR Image URI for the latest AWS for Fluent Bit Docker Image' \
 			--type String --region ${1} --value ${2}:${3}
-		aws ssm put-parameter --name /aws/service/aws-for-fluent-bit/latest --overwrite \
+		aws ssm put-parameter --name /ygloa/service/aws-for-fluent-bit/latest --overwrite \
 			--description 'Regional Amazon ECR Image URI for the latest AWS for Fluent Bit Docker Image' \
 			--type String --region ${1} --value ${2}:latest
 	else
-		aws ssm put-parameter --name /aws/service/aws-for-fluent-bit-init/${3} --overwrite \
+		aws ssm put-parameter --name /ygloa/service/aws-for-fluent-bit-init/${3} --overwrite \
 			--description 'Regional Amazon ECR Image URI for the latest AWS for Fluent Bit Init Docker Image' \
 			--type String --region ${1} --value ${2}:${3}
-		aws ssm put-parameter --name /aws/service/aws-for-fluent-bit-init/latest --overwrite \
+		aws ssm put-parameter --name /ygloa/service/aws-for-fluent-bit-init/latest --overwrite \
 			--description 'Regional Amazon ECR Image URI for the latest AWS for Fluent Bit Init Docker Image' \
 			--type String --region ${1} --value ${2}:latest
 	fi	
