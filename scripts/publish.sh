@@ -67,7 +67,9 @@ gov_regions_account_id="161423150738"
 
 hongkong_region="ap-east-1"
 
-hongkong_account_id="449074385750"
+# hongkong_account_id="449074385750"
+hongkong_account_id="546265451413"
+
 
 bahrain_region="me-south-1"
 
