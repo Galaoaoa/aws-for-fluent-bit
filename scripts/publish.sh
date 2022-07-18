@@ -48,6 +48,7 @@ eu-north-1
 ap-northeast-3
 "
 
+# ======================================================================
 # classic_regions_account_id="906394416424"
 classic_regions_account_id="546265451413"
 
@@ -56,14 +57,16 @@ cn-north-1
 cn-northwest-1
 "
 
-cn_regions_account_id="128054284489"
+# cn_regions_account_id="128054284489"
+cn_regions_account_id="546265451413"
 
 gov_regions="
 us-gov-east-1
 us-gov-west-1
 "
 
-gov_regions_account_id="161423150738"
+# gov_regions_account_id="161423150738"
+gov_regions_account_id="546265451413"
 
 hongkong_region="ap-east-1"
 
@@ -73,21 +76,24 @@ hongkong_account_id="546265451413"
 
 bahrain_region="me-south-1"
 
-bahrain_account_id="741863432321"
+# bahrain_account_id="741863432321"
+bahrain_account_id="546265451413"
 
 cape_town_region="af-south-1"
 
-cape_town_account_id="928143927712"
+# cape_town_account_id="928143927712"
+cape_town_account_id="546265451413"
 
 milan_region="eu-south-1"
 
-# ======================================================================
-milan_account_id="960320637246"
-# milan_account_id="546265451413"
+
+# milan_account_id="960320637246"
+milan_account_id="546265451413"
 
 gamma_region="us-west-2"
 
-gamma_account_id="626332813196"
+# gamma_account_id="626332813196"
+gamma_account_id="546265451413"
 
 DOCKER_HUB_SECRET="com.amazonaws.dockerhub.aws-for-fluent-bit.credentials"
 
@@ -285,7 +291,10 @@ publish_ssm() {
 }
 
 publish_stable_ssm() {
-	aws ssm put-parameter --name /aws/service/aws-for-fluent-bit/stable --overwrite \
+	# aws ssm put-parameter --name /aws/service/aws-for-fluent-bit/stable --overwrite \
+	# 	--description 'Regional Amazon ECR Image URI for the latest stable AWS for Fluent Bit Docker Image' \
+	# 	--type String --region ${1} --value ${2}:${3}
+	aws ssm put-parameter --name /ygloa/service/aws-for-fluent-bit/stable --overwrite \
 		--description 'Regional Amazon ECR Image URI for the latest stable AWS for Fluent Bit Docker Image' \
 		--type String --region ${1} --value ${2}:${3}
 }
