@@ -184,7 +184,7 @@ publish_to_public_ecr() {
 		# 	create_manifest_list public.ecr.aws/aws-observability/aws-for-fluent-bit "stable" ${AWS_FOR_FLUENT_BIT_STABLE_VERSION}
 		# fi
 
-		aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/aws-observability
+		aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/f3y9q9u2
 		if [ ${1} = "amazon/aws-for-fluent-bit" ]; then
 			docker pull public.ecr.aws/f3y9q9u2/aws-for-fluent-bit:stable || echo "0"
 			sha1=$(docker inspect --format='{{index .RepoDigests 0}}' public.ecr.aws/f3y9q9u2/aws-for-fluent-bit:stable || echo "0")
