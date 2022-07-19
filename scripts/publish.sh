@@ -291,12 +291,20 @@ publish_ssm() {
 }
 
 publish_stable_ssm() {
+	# ======================================================================
 	# aws ssm put-parameter --name /aws/service/aws-for-fluent-bit/stable --overwrite \
 	# 	--description 'Regional Amazon ECR Image URI for the latest stable AWS for Fluent Bit Docker Image' \
 	# 	--type String --region ${1} --value ${2}:${3}
-	aws ssm put-parameter --name /ygloa/service/aws-for-fluent-bit/stable --overwrite \
-		--description 'Regional Amazon ECR Image URI for the latest stable AWS for Fluent Bit Docker Image' \
-		--type String --region ${1} --value ${2}:${3}
+
+	if [ $# -eq 3 ]; then
+		aws ssm put-parameter --name /ygloa/service/aws-for-fluent-bit/stable --overwrite \
+			--description 'Regional Amazon ECR Image URI for the latest stable AWS for Fluent Bit Docker Image' \
+			--type String --region ${1} --value ${2}:${3}
+	else
+		aws ssm put-parameter --name /ygloa/service/aws-for-fluent-bit-init/stable --overwrite \
+			--description 'Regional Amazon ECR Image URI for the latest stable AWS for Fluent Bit Docker Image' \
+			--type String --region ${1} --value ${2}:${3}
+	fi
 }
 
 rollback_ssm() {
@@ -495,14 +503,14 @@ sync_latest_image() {
 	ssm_parameters=$(aws ssm get-parameters --names "/ygloa/service/aws-for-fluent-bit-init/stable" --region ${region})
 	invalid_parameter=$(echo $ssm_parameters | jq .InvalidParameters[0])
 	if [ "$invalid_parameter" != 'null' ]; then
-		publish_stable_ssm ${region} ${account_id}.dkr.ecr.${region}.${endpoint}/aws-for-fluent-bit-init ${AWS_FOR_FLUENT_BIT_STABLE_VERSION}
+		publish_stable_ssm ${region} ${account_id}.dkr.ecr.${region}.${endpoint}/aws-for-fluent-bit-init ${AWS_FOR_FLUENT_BIT_STABLE_VERSION} initFlag
 	fi
 
 	stable_uri=$(aws ssm get-parameters --names /ygloa/service/aws-for-fluent-bit-init/stable --region ${region} --query 'Parameters[0].Value')
 	stable_uri=$(sed -e 's/^"//' -e 's/"$//' <<<"$stable_uri")
 
 	if [ "$stable_uri" != "${account_id}.dkr.ecr.${region}.${endpoint}/aws-for-fluent-bit-init:${AWS_FOR_FLUENT_BIT_STABLE_VERSION}" ]; then
-		publish_stable_ssm ${region} ${account_id}.dkr.ecr.${region}.${endpoint}/aws-for-fluent-bit-init ${AWS_FOR_FLUENT_BIT_STABLE_VERSION}
+		publish_stable_ssm ${region} ${account_id}.dkr.ecr.${region}.${endpoint}/aws-for-fluent-bit-init ${AWS_FOR_FLUENT_BIT_STABLE_VERSION} initFlag
 	fi
 }
 
