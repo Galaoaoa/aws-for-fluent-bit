@@ -497,7 +497,7 @@ sync_latest_image() {
 	ssm_parameters=$(aws ssm get-parameters --names "/ygloa/service/aws-for-fluent-bit-init/${AWS_FOR_FLUENT_BIT_VERSION_DOCKERHUB}" --region ${region})
 	invalid_parameter=$(echo $ssm_parameters | jq .InvalidParameters[0])
 	if [ "$invalid_parameter" != 'null' ]; then
-		publish_ssm ${region} ${account_id}.dkr.ecr.${region}.${endpoint}/aws-for-fluent-bit-init ${AWS_FOR_FLUENT_BIT_VERSION_DOCKERHUB}
+		publish_ssm ${region} ${account_id}.dkr.ecr.${region}.${endpoint}/aws-for-fluent-bit-init ${AWS_FOR_FLUENT_BIT_VERSION_DOCKERHUB} initFlag
 	fi
 
 	ssm_parameters=$(aws ssm get-parameters --names "/ygloa/service/aws-for-fluent-bit-init/stable" --region ${region})
