@@ -613,7 +613,7 @@ verify_ecr() {
 		verify_sha $stableSha1 $stableSha2
 
 		docker pull ${account_id}.dkr.ecr.${region}.${endpoint}/aws-for-fluent-bit-init:${AWS_FOR_FLUENT_BIT_VERSION_DOCKERHUB}
-		sha1_init=$(docker inspect --format='{{index .RepoDigests 0}}' ${account_id}.dkr.ecr.${region}.${endpoint}/aws-for-fluent-bit:${AWS_FOR_FLUENT_BIT_VERSION_DOCKERHUB})
+		sha1_init=$(docker inspect --format='{{index .RepoDigests 0}}' ${account_id}.dkr.ecr.${region}.${endpoint}/aws-for-fluent-bit-init:${AWS_FOR_FLUENT_BIT_VERSION_DOCKERHUB})
 		
 	else
 		docker pull ${account_id}.dkr.ecr.${region}.${endpoint}/aws-for-fluent-bit:${AWS_FOR_FLUENT_BIT_VERSION}
