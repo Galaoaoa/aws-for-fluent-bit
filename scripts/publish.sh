@@ -604,13 +604,14 @@ verify_ecr() {
 
 		docker pull ${account_id}.dkr.ecr.${region}.${endpoint}/aws-for-fluent-bit:${AWS_FOR_FLUENT_BIT_VERSION_DOCKERHUB}
 		sha1=$(docker inspect --format='{{index .RepoDigests 0}}' ${account_id}.dkr.ecr.${region}.${endpoint}/aws-for-fluent-bit:${AWS_FOR_FLUENT_BIT_VERSION_DOCKERHUB})
+		
 		# ======================================================================
 		docker pull ${account_id}.dkr.ecr.${region}.${endpoint}/aws-for-fluent-bit-init:stable || echo "0"
-		stableSha1=$(docker inspect --format='{{index .RepoDigests 0}}' ${account_id}.dkr.ecr.${region}.${endpoint}/aws-for-fluent-bit-init:stable || echo "0")
+		stableSha1_init=$(docker inspect --format='{{index .RepoDigests 0}}' ${account_id}.dkr.ecr.${region}.${endpoint}/aws-for-fluent-bit-init:stable || echo "0")
 		docker pull ${account_id}.dkr.ecr.${region}.${endpoint}/aws-for-fluent-bit-init:${AWS_FOR_FLUENT_BIT_STABLE_VERSION} || echo "0"
-		stableSha2=$(docker inspect --format='{{index .RepoDigests 0}}' ${account_id}.dkr.ecr.${region}.${endpoint}/aws-for-fluent-bit-init:${AWS_FOR_FLUENT_BIT_STABLE_VERSION} || echo "0")
+		stableSha2_init=$(docker inspect --format='{{index .RepoDigests 0}}' ${account_id}.dkr.ecr.${region}.${endpoint}/aws-for-fluent-bit-init:${AWS_FOR_FLUENT_BIT_STABLE_VERSION} || echo "0")
 
-		verify_sha $stableSha1 $stableSha2
+		verify_sha $stableSha1_init $stableSha2_init
 
 		docker pull ${account_id}.dkr.ecr.${region}.${endpoint}/aws-for-fluent-bit-init:${AWS_FOR_FLUENT_BIT_VERSION_DOCKERHUB}
 		sha1_init=$(docker inspect --format='{{index .RepoDigests 0}}' ${account_id}.dkr.ecr.${region}.${endpoint}/aws-for-fluent-bit-init:${AWS_FOR_FLUENT_BIT_VERSION_DOCKERHUB})
