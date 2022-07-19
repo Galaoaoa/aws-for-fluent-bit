@@ -125,26 +125,27 @@ publish_to_docker_hub() {
 		# Get the image SHA's
 
 		# =========================Registry name should be fixed later============
+		# =========================${1}:stable  --> galaoaoa/aws-for-fluent-bit:stable============
 		# docker pull ${1}:stable || echo "0"
 		# sha1=$(docker inspect --format='{{index .RepoDigests 0}}' ${1}:stable || echo "0")
 		# docker pull ${1}:${AWS_FOR_FLUENT_BIT_STABLE_VERSION}
 		# sha2=$(docker inspect --format='{{index .RepoDigests 0}}' ${1}:${AWS_FOR_FLUENT_BIT_STABLE_VERSION})
 		if [ "${1}" = "amazon/aws-for-fluent-bit" ]; then
 			docker pull galaoaoa/aws-for-fluent-bit:stable || echo "0"
-			sha1=$(docker inspect --format='{{index .RepoDigests 0}}' ${1}:stable || echo "0")
+			sha1=$(docker inspect --format='{{index .RepoDigests 0}}' galaoaoa/aws-for-fluent-bit:stable || echo "0")
 			docker pull galaoaoa/aws-for-fluent-bit:${AWS_FOR_FLUENT_BIT_STABLE_VERSION}
-			sha2=$(docker inspect --format='{{index .RepoDigests 0}}' ${1}:${AWS_FOR_FLUENT_BIT_STABLE_VERSION})
+			sha2=$(docker inspect --format='{{index .RepoDigests 0}}' galaoaoa/aws-for-fluent-bit:${AWS_FOR_FLUENT_BIT_STABLE_VERSION})
 		elif [ "${1}" = "amazon/aws-for-fluent-bit-init" ]; then
 			docker pull galaoaoa/aws-for-fluent-bit-init:stable || echo "0"
-			sha1=$(docker inspect --format='{{index .RepoDigests 0}}' ${1}:stable || echo "0")
+			sha1=$(docker inspect --format='{{index .RepoDigests 0}}' galaoaoa/aws-for-fluent-bit-init:stable || echo "0")
 			docker pull galaoaoa/aws-for-fluent-bit-init:${AWS_FOR_FLUENT_BIT_STABLE_VERSION}
-			sha2=$(docker inspect --format='{{index .RepoDigests 0}}' ${1}:${AWS_FOR_FLUENT_BIT_STABLE_VERSION})
+			sha2=$(docker inspect --format='{{index .RepoDigests 0}}' galaoaoa/aws-for-fluent-bit-init:${AWS_FOR_FLUENT_BIT_STABLE_VERSION})
 		fi
 
 		match_two_sha $sha1 $sha2
-
+# =========================${1}  --> galaoaoa/aws-for-fluent-bit============
 		if [ "$IMAGE_SHA_MATCHED" = "FALSE" ]; then
-			create_manifest_list ${1} "stable" ${AWS_FOR_FLUENT_BIT_STABLE_VERSION}
+			create_manifest_list galaoaoa/aws-for-fluent-bit-init "stable" ${AWS_FOR_FLUENT_BIT_STABLE_VERSION}
 		fi
 	else
 		for arch in "${ARCHITECTURES[@]}"

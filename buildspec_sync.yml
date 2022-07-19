@@ -17,8 +17,9 @@ phases:
     commands:
       # Enforce STS regional endpoints
       - export AWS_STS_REGIONAL_ENDPOINTS=regional
-      
-      - './scripts/publish.sh cicd-publish ${AWS_REGION} stable' 
+      # ===============================================================================================
+      # Publish stable tag to other region's (except 4 special regions) ECR when AWS_REGION is not 4 special regions
+      - './scripts/publish.sh cicd-publish ${AWS_REGION} stable'
 
       # Publish stable tag to Dockerhub when AWS_REGION is us-west-2
       - './scripts/publish.sh cicd-publish public-dockerhub-stable ${AWS_REGION}'
