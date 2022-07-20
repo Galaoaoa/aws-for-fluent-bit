@@ -20,7 +20,7 @@ import (
 
 // static paths
 const (
-	s3FileFolderPath       = "/init/fluent-bit-init-s3-files/"
+	s3FileDirectoryPath    = "/init/fluent-bit-init-s3-files/"
 	mainConfigFile         = "/init/fluent-bit-init.conf"
 	originalMainConfigFile = "/fluent-bit/etc/fluent-bit.conf"
 	invokeFile             = "/init/invoke_fluent_bit.sh"
@@ -28,14 +28,14 @@ const (
 
 var (
 	// default Fluent Bit command
-	fluentBitCommand = "exec /fluent-bit/bin/fluent-bit -e /fluent-bit/firehose.so -e /fluent-bit/cloudwatch.so -e /fluent-bit/kinesis.so"
+	baseCommand = "exec /fluent-bit/bin/fluent-bit -e /fluent-bit/firehose.so -e /fluent-bit/cloudwatch.so -e /fluent-bit/kinesis.so"
 
 	// global s3 client and flag
-	s3Client      *s3.S3
-	exists3Client bool = false
+	s3Client        *s3.S3
+	s3ClientCreated bool = false
 
 	// global ecs metadata region
-	metadataReigon string = ""
+	metadataRegion string = ""
 )
 
 // HTTPClient interface
@@ -60,14 +60,8 @@ type ECSTaskMetadata struct {
 	ECS_TASK_DEFINITION string `json:"TaskDefinition"` // TaskDefinition = "family:revision"
 }
 
-func createHTTPClient() HTTPClient {
-	client := &http.Client{}
-	return client
-}
-
 // get ECS Task Metadata via endpoint V4
 func getECSTaskMetadata(httpClient HTTPClient) ECSTaskMetadata {
-
 	var metadata ECSTaskMetadata
 
 	ecsTaskMetadataEndpointV4 := os.Getenv("ECS_CONTAINER_METADATA_URI_V4")
@@ -83,7 +77,7 @@ func getECSTaskMetadata(httpClient HTTPClient) ECSTaskMetadata {
 
 	response, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		logrus.Fatalf("[FluentBit Init Process] Failed to read HTTP response: %s\n", err)
+		logrus.Fatalf("[FluentBit Init Process] Failed to read ECS Metadata from HTTP response: %s\n", err)
 	}
 	res.Body.Close()
 
@@ -103,12 +97,14 @@ func getECSTaskMetadata(httpClient HTTPClient) ECSTaskMetadata {
 	metadata.AWS_REGION = arn.Region
 	metadata.ECS_TASK_DEFINITION = metadata.ECS_FAMILY + ":" + metadata.ECS_REVISION
 
+	// set global ecs metadata region for S3 client
+	metadataRegion = reflect.ValueOf(metadata).Field(0).Interface().(string)
+
 	return metadata
 }
 
 // set ECS Task Metadata as environment variables in the invoke_fluent_bit.sh
 func setECSTaskMetadata(metadata ECSTaskMetadata, filePath string) {
-
 	t := reflect.TypeOf(metadata)
 	v := reflect.ValueOf(metadata)
 
@@ -133,16 +129,15 @@ func createCommand(command *string, filePath string) {
 	*command = *command + " -c " + filePath
 }
 
-// create a folder to store S3 config files user specified (download them from S3)
-func createS3ConfigFileFolder(folderPath string) {
-	os.Mkdir(folderPath, 0700)
+// create a directory to store S3 config files user specified (download them from S3)
+func createS3ConfigFileDirectory(directoryPath string) {
+	os.Mkdir(directoryPath, 0700)
 }
 
 // get our built in config files or files from s3
 // process built-in config files directly
-// add S3 config files to folder "/init/fluent-bit-init-s3-files/"
+// add S3 config files to directory "/init/fluent-bit-init-s3-files/"
 func getAllConfigFiles() {
-
 	// get all env vars in the container
 	envs := os.Environ()
 
@@ -158,13 +153,17 @@ func getAllConfigFiles() {
 		envKey = string(env_kv[0])
 		envValue = string(env_kv[1])
 
-		matched_s3, _ := regexp.MatchString("aws_fluent_bit_init_s3", envKey)
-		matched_S3, _ := regexp.MatchString("aws_fluent_bit_init_S3", envKey)
-		matched_file, _ := regexp.MatchString("aws_fluent_bit_init_file", envKey)
+		s3_regex, _ := regexp.Compile("aws_fluent_bit_init_[sS]3")
+		file_regex, _ := regexp.Compile("aws_fluent_bit_init_[fF]ile")
 
-		// if this env var's value is an arn
-		if matched_s3 || matched_S3 {
-			getS3ConfigFile(envValue)
+		matched_s3 := s3_regex.MatchString(envKey)
+		matched_file := file_regex.MatchString(envKey)
+
+		// if this env var's value is an arn, download the config file first, then process it
+		if matched_s3 {
+			s3FilePath := getS3ConfigFile(envValue)
+			s3FileName := strings.SplitN(s3FilePath, "/", -1)
+			processConfigFile(s3FileDirectoryPath + s3FileName[len(s3FileName)-1])
 		}
 		// if this env var's value is a path of our built-in config file, process is derectly
 		if matched_file {
@@ -174,14 +173,13 @@ func getAllConfigFiles() {
 }
 
 func processConfigFile(path string) {
-
-	content_b, err := ioutil.ReadFile(path)
+	contentBytes, err := ioutil.ReadFile(path)
 	if err != nil {
 		logrus.Errorln(err)
 		logrus.Fatalf("[FluentBit Init Process] Cannot open file: %s\n", path)
 	}
 
-	content := string(content_b)
+	content := string(contentBytes)
 
 	if strings.Contains(content, "[PARSER]") {
 		// this is a parser config file, change command
@@ -192,14 +190,13 @@ func processConfigFile(path string) {
 	}
 }
 
-func getS3ConfigFile(arn string) {
-
+func getS3ConfigFile(arn string) string {
 	// Preparation for downloading S3 config files
-	if !exists3Client {
+	if !s3ClientCreated {
 		createS3Client()
 	}
 
-	// e.g. "arn:aws:s3:::ygloa-bucket/s3_parser.conf"
+	// e.g. "arn:aws:s3:::user-bucket/s3_parser.conf"
 	arnBucketFile := arn[13:]
 	bucketAndFile := strings.SplitN(arnBucketFile, "/", 2)
 	if len(bucketAndFile) != 2 {
@@ -217,7 +214,7 @@ func getS3ConfigFile(arn string) {
 	output, err := s3Client.GetBucketLocation(input)
 	if err != nil {
 		logrus.Errorln(err)
-		logrus.Fatalf("[FluentBit Init Process] Cannot get bucket region of %s + %s", bucketName, s3FilePath)
+		logrus.Fatalf("[FluentBit Init Process] Cannot get bucket region of %s + %s, you must be the bucket owner to implement this operation\n", bucketName, s3FilePath)
 	}
 
 	bucketRegion := aws.StringValue(output.LocationConstraint)
@@ -230,17 +227,17 @@ func getS3ConfigFile(arn string) {
 	// create a downloader
 	s3Downloader := createS3Downloader(bucketRegion)
 
-	// download file from S3 and store in the folder "/init/fluent-bit-init-s3-files/"
-	downloadS3ConfigFile(s3Downloader, s3FilePath, bucketName, s3FileFolderPath)
+	// download file from S3 and store in the directory "/init/fluent-bit-init-s3-files/"
+	downloadS3ConfigFile(s3Downloader, s3FilePath, bucketName, s3FileDirectoryPath)
 
+	return s3FilePath
 }
 
 // create a S3 client as the global S3 client for reuse
 func createS3Client() {
-
 	region := "us-east-1"
-	if metadataReigon != "" {
-		region = metadataReigon
+	if metadataRegion != "" {
+		region = metadataRegion
 	}
 
 	s3Client = s3.New(session.Must(session.NewSession(&aws.Config{
@@ -248,7 +245,7 @@ func createS3Client() {
 		Region: aws.String(region),
 	})))
 
-	exists3Client = true
+	s3ClientCreated = true
 }
 
 func createS3Downloader(bucketRegion string) S3Downloader {
@@ -265,10 +262,9 @@ func createS3Downloader(bucketRegion string) S3Downloader {
 	return s3Downloader
 }
 
-func downloadS3ConfigFile(s3Downloader S3Downloader, s3FilePath, bucketName, s3FileFolder string) {
-
+func downloadS3ConfigFile(s3Downloader S3Downloader, s3FilePath, bucketName, s3FileDirectory string) {
 	s3FileName := strings.SplitN(s3FilePath, "/", -1)
-	fileFromS3 := createFile(s3FileFolder+s3FileName[len(s3FileName)-1], false)
+	fileFromS3 := createFile(s3FileDirectory+s3FileName[len(s3FileName)-1], false)
 	defer fileFromS3.Close()
 
 	_, err := s3Downloader.Download(fileFromS3,
@@ -277,28 +273,22 @@ func downloadS3ConfigFile(s3Downloader S3Downloader, s3FilePath, bucketName, s3F
 			Key:    aws.String(s3FilePath),
 		})
 	if err != nil {
-		logrus.Errorln(err)
-		logrus.Fatalf("[FluentBit Init Process] Cannot download %s from s3\n", s3FileName)
-	}
-}
+		logrus.Warnf("[FluentBit Init Process] Cannot download %s from s3, retrying...\n", s3FileName)
 
-func processS3ConfigFiles(folderPath string) {
-
-	fileInfos, err := ioutil.ReadDir(folderPath)
-	if err != nil {
-		logrus.Errorln(err)
-		logrus.Fatalf("[FluentBit Init Process] Unable to read config files in %s folder\n", folderPath)
-	}
-
-	for _, file := range fileInfos {
-		filePath := folderPath + file.Name()
-		processConfigFile(filePath)
+		_, error := s3Downloader.Download(fileFromS3,
+			&s3.GetObjectInput{
+				Bucket: aws.String(bucketName),
+				Key:    aws.String(s3FilePath),
+			})
+		if error != nil {
+			logrus.Errorln(error)
+			logrus.Fatalf("[FluentBit Init Process] Cannot download %s from s3\n", s3FileName)
+		}
 	}
 }
 
 // use @INCLUDE to add config files to the main config file
 func writeInclude(configFilePath, mainConfigFilePath string) {
-
 	mainConfigFile := openFile(mainConfigFilePath)
 	defer mainConfigFile.Close()
 
@@ -312,28 +302,26 @@ func writeInclude(configFilePath, mainConfigFilePath string) {
 
 // change the fluent bit cammand to use "-R" to specift Parser config file
 func updateCommand(parserFilePath string) {
-	fluentBitCommand = fluentBitCommand + " -R " + parserFilePath
-	logrus.Infoln("[FluentBit Init Process] Command is change to -> " + fluentBitCommand)
+	baseCommand = baseCommand + " -R " + parserFilePath
+	logrus.Infoln("[FluentBit Init Process] Command is change to -> " + baseCommand)
 }
 
 // change the invoke_fluent_bit.sh
 // which will declare ECS Task Metadata as environment variables
 // and finally invoke Fluent Bit
 func modifyInvokeFile(filePath string) {
-
 	invokeFile := openFile(filePath)
 	defer invokeFile.Close()
 
-	_, err := invokeFile.WriteString(fluentBitCommand)
+	_, err := invokeFile.WriteString(baseCommand)
 	if err != nil {
 		logrus.Errorln(err)
-		logrus.Fatalf("[FluentBit Init Process] Cannot write %s in invoke_fluent_bit.sh\n", fluentBitCommand)
+		logrus.Fatalf("[FluentBit Init Process] Cannot write %s in invoke_fluent_bit.sh\n", baseCommand)
 	}
 }
 
 // create a file, when flag is true, the file will be closed automatically after creation
 func createFile(filePath string, AutoClose bool) *os.File {
-
 	file, err := os.Create(filePath)
 	if err != nil {
 		logrus.Errorln(err)
@@ -348,7 +336,6 @@ func createFile(filePath string, AutoClose bool) *os.File {
 }
 
 func openFile(filePath string) *os.File {
-
 	file, err := os.OpenFile(filePath, os.O_APPEND|os.O_WRONLY, 0700)
 	if err != nil {
 		logrus.Errorln(err)
@@ -358,16 +345,14 @@ func openFile(filePath string) *os.File {
 }
 
 func main() {
-
 	// create the invoke_fluent_bit.sh
 	// which will declare ECS Task Metadata as environment variables
 	// and finally invoke Fluent Bit
 	createFile(invokeFile, true)
 
 	// get ECS Task Metadata and set the region for S3 client
-	httpClient := createHTTPClient()
+	httpClient := &http.Client{}
 	metadata := getECSTaskMetadata(httpClient)
-	metadataReigon = reflect.ValueOf(metadata).Field(0).Interface().(string)
 
 	// set ECS Task Metada as env vars in the invoke_fluent_bit.sh
 	setECSTaskMetadata(metadata, invokeFile)
@@ -378,20 +363,16 @@ func main() {
 	// add @INCLUDE in main config file to include original main config file
 	writeInclude(originalMainConfigFile, mainConfigFile)
 
-	// create Fluent Bit command to use "-R" to specify new main config file
-	createCommand(&fluentBitCommand, mainConfigFile)
+	// create Fluent Bit command to use "-c" to specify new main config file
+	createCommand(&baseCommand, mainConfigFile)
 
-	// create a S3 config files folder, which will store all config files download from S3
-	createS3ConfigFileFolder(s3FileFolderPath)
+	// create a S3 config files directory, which will store all config files download from S3
+	createS3ConfigFileDirectory(s3FileDirectoryPath)
 
 	// get our built in config files or files from s3
 	// process built-in config files directly
-	// add S3 config files to folder "/init/fluent-bit-init-s3-files/"
+	// add S3 config files to directory "/init/fluent-bit-init-s3-files/"
 	getAllConfigFiles()
-
-	// process all config files in S3 config file folder
-	// add @INCLUDE in main config file and change the fluent bit command if it's a Parser config file
-	processS3ConfigFiles(s3FileFolderPath)
 
 	// modify invoke_fluent_bit.sh, invoke fluent bit
 	// this function will be called at the end

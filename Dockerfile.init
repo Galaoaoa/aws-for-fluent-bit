@@ -2,7 +2,7 @@ FROM public.ecr.aws/amazonlinux/amazonlinux:latest as init-builder
 
 RUN curl -sL -o /bin/gimme https://raw.githubusercontent.com/travis-ci/gimme/master/gimme
 RUN chmod +x /bin/gimme
-RUN yum upgrade -y && yum install -y tar gzip git make gcc
+RUN yum upgrade -y && yum install -y tar gzip git
 ENV HOME /home
 RUN /bin/gimme 1.17.9
 ENV PATH ${PATH}:/home/.gimme/versions/go1.17.9.linux.arm64/bin:/home/.gimme/versions/go1.17.9.linux.amd64/bin
@@ -11,9 +11,10 @@ ENV GO111MODULE on
 RUN go env -w GOPROXY=direct
 
 # Build init process for Fluent Bit
-COPY /init/fluent_bit_init_process.go  /
-RUN go mod init fluent_bit_init_process \
-    && go mod tidy \
+COPY /init/fluent_bit_init_process.go /
+COPY /go.mod /
+COPY /go.sum /
+RUN go mod tidy \
     && go build fluent_bit_init_process.go
 
 FROM amazon/aws-for-fluent-bit:latest
