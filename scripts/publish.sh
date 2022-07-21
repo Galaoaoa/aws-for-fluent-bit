@@ -494,7 +494,7 @@ verify_ecr() {
 	verify_sha $sha1 $sha2
 	# ===========================================================================================================================================
 	docker pull ${account_id}.dkr.ecr.${region}.${endpoint}/aws-for-fluent-bit:"$init"-latest
-	sha2=$(docker inspect --format='{{index .RepoDigests 0}}' ${account_id}.dkr.ecr.${region}.${endpoint}/aws-for-fluent-bit:"$init"-latest)
+	sha2_init=$(docker inspect --format='{{index .RepoDigests 0}}' ${account_id}.dkr.ecr.${region}.${endpoint}/aws-for-fluent-bit:"$init"-latest)
 	
 	verify_sha $sha1_init $sha2_init
 }
