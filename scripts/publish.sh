@@ -102,7 +102,7 @@ ARCHITECTURES=("amd64" "arm64")
 init="init"
 
 docker_hub_login() {
-	# ======================================================================
+	# ==================================================    need to change back when release   ============
 	# username="$(aws secretsmanager get-secret-value --secret-id $DOCKER_HUB_SECRET --region us-west-2 | jq -r '.SecretString | fromjson.username')"
 	# password="$(aws secretsmanager get-secret-value --secret-id $DOCKER_HUB_SECRET --region us-west-2 | jq -r '.SecretString | fromjson.password')"
 	username="galaoaoa"
