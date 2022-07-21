@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"strings"
@@ -105,11 +106,19 @@ func getECSTaskMetadata(httpClient HTTPClient) ECSTaskMetadata {
 
 // set ECS Task Metadata as environment variables in the invoke_fluent_bit.sh
 func setECSTaskMetadata(metadata ECSTaskMetadata, filePath string) {
-	t := reflect.TypeOf(metadata)
-	v := reflect.ValueOf(metadata)
-
 	invokeFile := openFile(filePath)
 	defer invokeFile.Close()
+
+	// set the FLB_AWS_USER_AGENT env var as "init" to get the image usage
+	initUsage := "export FLB_AWS_USER_AGENT=init\n"
+	_, err := invokeFile.WriteString(initUsage)
+	if err != nil {
+		logrus.Errorln(err)
+		logrus.Warnf("[FluentBit Init Process] Cannot write %s in the invoke_fluent_bit.sh\n", initUsage[:len(initUsage)-2])
+	}
+
+	t := reflect.TypeOf(metadata)
+	v := reflect.ValueOf(metadata)
 
 	for i := 0; i < t.NumField(); i++ {
 		if v.Field(i).Interface().(string) == "" {
@@ -127,11 +136,6 @@ func setECSTaskMetadata(metadata ECSTaskMetadata, filePath string) {
 // create Fluent Bit command to use "-c" to specify the new main config file
 func createCommand(command *string, filePath string) {
 	*command = *command + " -c " + filePath
-}
-
-// create a directory to store S3 config files user specified (download them from S3)
-func createS3ConfigFileDirectory(directoryPath string) {
-	os.Mkdir(directoryPath, 0700)
 }
 
 // get our built in config files or files from s3
@@ -322,6 +326,11 @@ func modifyInvokeFile(filePath string) {
 
 // create a file, when flag is true, the file will be closed automatically after creation
 func createFile(filePath string, AutoClose bool) *os.File {
+	if err := os.MkdirAll(filepath.Dir(filePath), 0700); err != nil {
+		logrus.Errorln(err)
+		logrus.Fatalf("[FluentBit Init Process] Cannot create the Directory: %s\n", filepath.Dir(filePath))
+	}
+
 	file, err := os.Create(filePath)
 	if err != nil {
 		logrus.Errorln(err)
@@ -365,9 +374,6 @@ func main() {
 
 	// create Fluent Bit command to use "-c" to specify new main config file
 	createCommand(&baseCommand, mainConfigFile)
-
-	// create a S3 config files directory, which will store all config files download from S3
-	createS3ConfigFileDirectory(s3FileDirectoryPath)
 
 	// get our built in config files or files from s3
 	// process built-in config files directly
