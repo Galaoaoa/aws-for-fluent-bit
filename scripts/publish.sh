@@ -88,6 +88,8 @@ DOCKER_HUB_SECRET="com.amazonaws.dockerhub.aws-for-fluent-bit.credentials"
 
 ARCHITECTURES=("amd64" "arm64")
 
+init="init"
+
 docker_hub_login() {
 	username="$(aws secretsmanager get-secret-value --secret-id $DOCKER_HUB_SECRET --region us-west-2 | jq -r '.SecretString | fromjson.username')"
 	password="$(aws secretsmanager get-secret-value --secret-id $DOCKER_HUB_SECRET --region us-west-2 | jq -r '.SecretString | fromjson.password')"
@@ -124,10 +126,16 @@ publish_to_docker_hub() {
 		do
 			docker tag ${1}:"$arch" ${1}:"${arch}"-${AWS_FOR_FLUENT_BIT_VERSION}
 			docker push ${1}:"$arch"-${AWS_FOR_FLUENT_BIT_VERSION}
+			# ======================================================================
+			docker tag ${1}:"$init"-"$arch" ${1}:"$init"-"${arch}"-${AWS_FOR_FLUENT_BIT_VERSION}
+			docker push ${1}:"$init"-"$arch"-${AWS_FOR_FLUENT_BIT_VERSION}
 		done
 
 		create_manifest_list ${1} "latest" ${AWS_FOR_FLUENT_BIT_VERSION}
 		create_manifest_list ${1} ${AWS_FOR_FLUENT_BIT_VERSION} ${AWS_FOR_FLUENT_BIT_VERSION}
+		# ======================================================================
+		create_manifest_list_init ${1} "init-latest" ${AWS_FOR_FLUENT_BIT_VERSION}
+		create_manifest_list_init ${1} "$init"-${AWS_FOR_FLUENT_BIT_VERSION} ${AWS_FOR_FLUENT_BIT_VERSION}
 	fi
 }
 
@@ -289,6 +297,25 @@ create_manifest_list() {
 	for arch in "${ARCHITECTURES[@]}"
 	do
 		docker manifest annotate --arch "$arch" ${1}:${tag} ${1}:"$arch"-${version}
+	done
+
+	# sanity check on the debug log.
+ 	docker manifest inspect ${1}:${tag}
+	docker manifest push ${1}:${tag}
+}
+
+create_manifest_list_init() {
+
+	export DOCKER_CLI_EXPERIMENTAL=enabled
+	tag=${2}
+	version=${3}
+
+	# TODO: Add a way to automatically generate arch images in manifest
+	docker manifest create ${1}:${tag} ${1}:"$init"-arm64-${version} ${1}:"$init"-amd64-${version}
+
+	for arch in "${ARCHITECTURES[@]}"
+	do
+		docker manifest annotate --arch "$arch" ${1}:${tag} ${1}:"$init"-"$arch"-${version}
 	done
 
 	# sanity check on the debug log.
