@@ -193,23 +193,57 @@ publish_to_public_ecr() {
 			docker tag ${1}:"$arch" public.ecr.aws/f3y9q9u2/aws-for-fluent-bit:"$arch"-${AWS_FOR_FLUENT_BIT_VERSION}
 			docker push public.ecr.aws/f3y9q9u2/aws-for-fluent-bit:"$arch"-${AWS_FOR_FLUENT_BIT_VERSION}
 
-			docker tag ${1}:"$arch" public.ecr.aws/f3y9q9u2/aws-for-fluent-bit:init"$arch"-${AWS_FOR_FLUENT_BIT_VERSION}
-			docker push public.ecr.aws/f3y9q9u2/aws-for-fluent-bit:"$arch"-${AWS_FOR_FLUENT_BIT_VERSION}
+			docker tag ${1}:"$init"-"$arch" public.ecr.aws/f3y9q9u2/aws-for-fluent-bit:"$init"-"$arch"-${AWS_FOR_FLUENT_BIT_VERSION}
+			docker push public.ecr.aws/f3y9q9u2/aws-for-fluent-bit:"$init"-"$arch"-${AWS_FOR_FLUENT_BIT_VERSION}
 		done
 
-		create_manifest_list public.ecr.aws/aws-observability/aws-for-fluent-bit ${AWS_FOR_FLUENT_BIT_VERSION} ${AWS_FOR_FLUENT_BIT_VERSION}
-		aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/aws-observability
-		create_manifest_list public.ecr.aws/aws-observability/aws-for-fluent-bit "latest" ${AWS_FOR_FLUENT_BIT_VERSION}
+		# ==================================================  aws-observability -> f3y9q9u2  =========================================================
+		# create_manifest_list public.ecr.aws/aws-observability/aws-for-fluent-bit ${AWS_FOR_FLUENT_BIT_VERSION} ${AWS_FOR_FLUENT_BIT_VERSION}
+		# aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/aws-observability
+		# create_manifest_list public.ecr.aws/aws-observability/aws-for-fluent-bit "latest" ${AWS_FOR_FLUENT_BIT_VERSION}
+
+		# create_manifest_list_init public.ecr.aws/aws-observability/aws-for-fluent-bit "$init"-${AWS_FOR_FLUENT_BIT_VERSION} ${AWS_FOR_FLUENT_BIT_VERSION}
+		# aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/aws-observability
+		# create_manifest_list_init public.ecr.aws/aws-observability/aws-for-fluent-bit "init-latest" ${AWS_FOR_FLUENT_BIT_VERSION}
+		create_manifest_list public.ecr.aws/f3y9q9u2/aws-for-fluent-bit ${AWS_FOR_FLUENT_BIT_VERSION} ${AWS_FOR_FLUENT_BIT_VERSION}
+		aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/f3y9q9u2
+		create_manifest_list public.ecr.aws/f3y9q9u2/aws-for-fluent-bit "latest" ${AWS_FOR_FLUENT_BIT_VERSION}
+
+		create_manifest_list_init public.ecr.aws/f3y9q9u2/aws-for-fluent-bit "$init"-${AWS_FOR_FLUENT_BIT_VERSION} ${AWS_FOR_FLUENT_BIT_VERSION}
+		aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/f3y9q9u2
+		create_manifest_list_init public.ecr.aws/f3y9q9u2/aws-for-fluent-bit "init-latest" ${AWS_FOR_FLUENT_BIT_VERSION}
 	fi
 }
 
 publish_ssm() {
-	aws ssm put-parameter --name /aws/service/aws-for-fluent-bit/${3} --overwrite \
+	# ========================================= aws/service  -> ygloa/service for test======================================================================================
+# 	aws ssm put-parameter --name /aws/service/aws-for-fluent-bit/${3} --overwrite \
+# 		--description 'Regional Amazon ECR Image URI for the latest AWS for Fluent Bit Docker Image' \
+# 		--type String --region ${1} --value ${2}:${3}
+# 	aws ssm put-parameter --name /aws/service/aws-for-fluent-bit/latest --overwrite \
+# 		--description 'Regional Amazon ECR Image URI for the latest AWS for Fluent Bit Docker Image' \
+# 		--type String --region ${1} --value ${2}:latest
+# # ==============================================================================================================================
+# 	aws ssm put-parameter --name /aws/service/aws-for-fluent-bit/"$init"-${3} --overwrite \
+# 		--description 'Regional Amazon ECR Image URI for the "$init"-latest AWS for Fluent Bit Docker Image' \
+# 		--type String --region ${1} --value ${2}:"$init"-${3}
+# 	aws ssm put-parameter --name /aws/service/aws-for-fluent-bit/"$init"-latest --overwrite \
+# 		--description 'Regional Amazon ECR Image URI for the "$init"-latest AWS for Fluent Bit Docker Image' \
+# 		--type String --region ${1} --value ${2}:"$init"-latest
+
+	aws ssm put-parameter --name /ygloa/service/aws-for-fluent-bit/${3} --overwrite \
 		--description 'Regional Amazon ECR Image URI for the latest AWS for Fluent Bit Docker Image' \
 		--type String --region ${1} --value ${2}:${3}
-	aws ssm put-parameter --name /aws/service/aws-for-fluent-bit/latest --overwrite \
+	aws ssm put-parameter --name /ygloa/service/aws-for-fluent-bit/latest --overwrite \
 		--description 'Regional Amazon ECR Image URI for the latest AWS for Fluent Bit Docker Image' \
 		--type String --region ${1} --value ${2}:latest
+# ==============================================================================================================================
+	aws ssm put-parameter --name /ygloa/service/aws-for-fluent-bit/"$init"-${3} --overwrite \
+		--description 'Regional Amazon ECR Image URI for the "$init"-latest AWS for Fluent Bit Docker Image' \
+		--type String --region ${1} --value ${2}:"$init"-${3}
+	aws ssm put-parameter --name /ygloa/service/aws-for-fluent-bit/"$init"-latest --overwrite \
+		--description 'Regional Amazon ECR Image URI for the "$init"-latest AWS for Fluent Bit Docker Image' \
+		--type String --region ${1} --value ${2}:"$init"-latest
 }
 
 publish_stable_ssm() {
@@ -223,7 +257,30 @@ rollback_ssm() {
 }
 
 check_parameter() {
-	repo_uri=$(aws ssm get-parameter --name /aws/service/aws-for-fluent-bit/${2} --region ${1} --query 'Parameter.Value')
+	# ===================================================aws/service -> ygloa/service for test==================================
+# 	repo_uri=$(aws ssm get-parameter --name /aws/service/aws-for-fluent-bit/${2} --region ${1} --query 'Parameter.Value')
+# 	IFS='.' read -r -a array <<<"$repo_uri"
+# 	region="${array[3]}"
+# 	if [ "${1}" != "${region}" ]; then
+# 		echo "${1}: Region found in repo URI does not match SSM Parameter region: ${repo_uri}"
+# 		exit 1
+# 	fi
+# 	# remove leading and trailing quotes from repo_uri
+# 	repo_uri=$(sed -e 's/^"//' -e 's/"$//' <<<"$repo_uri")
+# 	docker pull $repo_uri
+# # ==============================================================================================================================
+# 	repo_uri_init=$(aws ssm get-parameter --name /aws/service/aws-for-fluent-bit/"$init"-${2} --region ${1} --query 'Parameter.Value')
+# 	IFS='.' read -r -a array <<<"$repo_uri_init"
+# 	region="${array[3]}"
+# 	if [ "${1}" != "${region}" ]; then
+# 		echo "${1}: Region found in repo URI does not match SSM Parameter region: ${repo_uri}"
+# 		exit 1
+# 	fi
+# 	# remove leading and trailing quotes from repo_uri
+# 	repo_uri_init=$(sed -e 's/^"//' -e 's/"$//' <<<"$repo_uri")
+# 	docker pull $repo_uri_init
+
+	repo_uri=$(aws ssm get-parameter --name /ygloa/service/aws-for-fluent-bit/${2} --region ${1} --query 'Parameter.Value')
 	IFS='.' read -r -a array <<<"$repo_uri"
 	region="${array[3]}"
 	if [ "${1}" != "${region}" ]; then
@@ -233,6 +290,17 @@ check_parameter() {
 	# remove leading and trailing quotes from repo_uri
 	repo_uri=$(sed -e 's/^"//' -e 's/"$//' <<<"$repo_uri")
 	docker pull $repo_uri
+# ==============================================================================================================================
+	repo_uri_init=$(aws ssm get-parameter --name /ygloa/service/aws-for-fluent-bit/"$init"-${2} --region ${1} --query 'Parameter.Value')
+	IFS='.' read -r -a array <<<"$repo_uri_init"
+	region="${array[3]}"
+	if [ "${1}" != "${region}" ]; then
+		echo "${1}: Region found in repo URI does not match SSM Parameter region: ${repo_uri}"
+		exit 1
+	fi
+	# remove leading and trailing quotes from repo_uri
+	repo_uri_init=$(sed -e 's/^"//' -e 's/"$//' <<<"$repo_uri")
+	docker pull $repo_uri_init
 }
 
 sync_latest_image() {
@@ -505,12 +573,35 @@ verify_public_ecr() {
 		verify_sha $sha1 $sha2
 	else
 		# Get the image SHA's
-		docker pull public.ecr.aws/aws-observability/aws-for-fluent-bit:latest
-		sha1=$(docker inspect --format='{{index .RepoDigests 0}}' public.ecr.aws/aws-observability/aws-for-fluent-bit:latest)
-		docker pull public.ecr.aws/aws-observability/aws-for-fluent-bit:${AWS_FOR_FLUENT_BIT_VERSION}
-		sha2=$(docker inspect --format='{{index .RepoDigests 0}}' public.ecr.aws/aws-observability/aws-for-fluent-bit:${AWS_FOR_FLUENT_BIT_VERSION})
+		# ============================ aws-observability -> f3y9q9u2  =================================================================================
+		# docker pull public.ecr.aws/aws-observability/aws-for-fluent-bit:latest
+		# sha1=$(docker inspect --format='{{index .RepoDigests 0}}' public.ecr.aws/aws-observability/aws-for-fluent-bit:latest)
+		# docker pull public.ecr.aws/aws-observability/aws-for-fluent-bit:${AWS_FOR_FLUENT_BIT_VERSION}
+		# sha2=$(docker inspect --format='{{index .RepoDigests 0}}' public.ecr.aws/aws-observability/aws-for-fluent-bit:${AWS_FOR_FLUENT_BIT_VERSION})
+
+		# verify_sha $sha1 $sha2
+		# # ======================================================================================================================================
+		# docker pull public.ecr.aws/aws-observability/aws-for-fluent-bit:"$init"-latest
+		# sha1_init=$(docker inspect --format='{{index .RepoDigests 0}}' public.ecr.aws/aws-observability/aws-for-fluent-bit:"$init"-latest)
+		# docker pull public.ecr.aws/aws-observability/aws-for-fluent-bit:"$init"-${AWS_FOR_FLUENT_BIT_VERSION}
+		# sha2_init=$(docker inspect --format='{{index .RepoDigests 0}}' public.ecr.aws/aws-observability/aws-for-fluent-bit:"$init"-${AWS_FOR_FLUENT_BIT_VERSION})
+
+		# verify_sha $sha1_init $sha2_init
+
+		docker pull public.ecr.aws/f3y9q9u2/aws-for-fluent-bit:latest
+		sha1=$(docker inspect --format='{{index .RepoDigests 0}}' public.ecr.aws/f3y9q9u2/aws-for-fluent-bit:latest)
+		docker pull public.ecr.aws/f3y9q9u2/aws-for-fluent-bit:${AWS_FOR_FLUENT_BIT_VERSION}
+		sha2=$(docker inspect --format='{{index .RepoDigests 0}}' public.ecr.aws/f3y9q9u2/aws-for-fluent-bit:${AWS_FOR_FLUENT_BIT_VERSION})
 
 		verify_sha $sha1 $sha2
+		# ======================================================================================================================================
+		docker pull public.ecr.aws/f3y9q9u2/aws-for-fluent-bit:"$init"-latest
+		sha1_init=$(docker inspect --format='{{index .RepoDigests 0}}' public.ecr.aws/f3y9q9u2/aws-for-fluent-bit:"$init"-latest)
+		docker pull public.ecr.aws/f3y9q9u2/aws-for-fluent-bit:"$init"-${AWS_FOR_FLUENT_BIT_VERSION}
+		sha2_init=$(docker inspect --format='{{index .RepoDigests 0}}' public.ecr.aws/f3y9q9u2/aws-for-fluent-bit:"$init"-${AWS_FOR_FLUENT_BIT_VERSION})
+
+		verify_sha $sha1_init $sha2_init
+
 	fi
 }
 
