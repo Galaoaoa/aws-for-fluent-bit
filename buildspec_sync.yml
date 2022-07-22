@@ -18,7 +18,7 @@ phases:
       # Enforce STS regional endpoints
       - export AWS_STS_REGIONAL_ENDPOINTS=regional
       
-      # - './scripts/publish.sh cicd-publish ${AWS_REGION} stable' 
+      - './scripts/publish.sh cicd-publish ${AWS_REGION} stable' 
 
       # Publish stable tag to Dockerhub when AWS_REGION is us-west-2
       - './scripts/publish.sh cicd-publish public-dockerhub-stable ${AWS_REGION}'
@@ -52,8 +52,8 @@ phases:
       - export AWS_SESSION_TOKEN=`echo $CREDS | jq -r .Credentials.SessionToken`
 
       # Verify from the verification account
-      # - './scripts/publish.sh cicd-verify ${AWS_REGION} stable'
-      # - './scripts/publish.sh cicd-verify-ssm ${AWS_REGION} stable'
+      - './scripts/publish.sh cicd-verify ${AWS_REGION} stable'
+      - './scripts/publish.sh cicd-verify-ssm ${AWS_REGION} stable'
 
        # Nullify the temporary credentials for the assumed role to verify
       - export AWS_ACCESS_KEY_ID=
