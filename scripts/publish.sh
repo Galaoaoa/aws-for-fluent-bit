@@ -336,7 +336,7 @@ publish_stable_ssm() {
 		--description 'Regional Amazon ECR Image URI for the latest stable AWS for Fluent Bit Docker Image' \
 		--type String --region ${1} --value ${2}:${3}
    # ==============================================================================================================================
-   	aws ssm put-parameter --name /ygloa/service/aws-for-fluent-bit/"$init"stable --overwrite \
+   	aws ssm put-parameter --name /ygloa/service/aws-for-fluent-bit/"$init"-stable --overwrite \
 		--description 'Regional Amazon ECR Image URI for the latest stable AWS for Fluent Bit Docker Image' \
 		--type String --region ${1} --value ${2}:${3}
 }
