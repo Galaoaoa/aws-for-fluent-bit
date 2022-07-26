@@ -484,10 +484,10 @@ sync_latest_image() {
 				${account_id}.dkr.ecr.${region}.${endpoint}/aws-for-fluent-bit:${arch}-${AWS_FOR_FLUENT_BIT_VERSION_DOCKERHUB}
 		fi
 		# ==============================================================================================================================
-		aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/f3y9q9u2 || echo "0"
+		# aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/f3y9q9u2 || echo "0"
 		docker pull public.ecr.aws/f3y9q9u2/aws-for-fluent-bit:"$init"-"$arch"-${AWS_FOR_FLUENT_BIT_VERSION_DOCKERHUB}
 		sha1_init=$(docker inspect --format='{{index .RepoDigests 0}}' public.ecr.aws/f3y9q9u2/aws-for-fluent-bit:"$init"-"$arch"-${AWS_FOR_FLUENT_BIT_VERSION_DOCKERHUB})
-		aws ecr get-login-password --region ${region}| docker login --username AWS --password-stdin ${account_id}.dkr.ecr.${region}.${endpoint}
+		# aws ecr get-login-password --region ${region}| docker login --username AWS --password-stdin ${account_id}.dkr.ecr.${region}.${endpoint}
 		repoList=$(aws ecr describe-repositories --region ${region})
 		repoName=$(echo $repoList | jq .repositories[0].repositoryName)
 		if [ "$repoName" = '"aws-for-fluent-bit"' ]; then
